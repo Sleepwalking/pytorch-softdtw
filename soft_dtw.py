@@ -36,9 +36,9 @@ def compute_softdtw_backward(D_, R, gamma):
       a0 = (R[i + 1, j] - R[i, j] - D[i + 1, j]) / gamma
       b0 = (R[i, j + 1] - R[i, j] - D[i, j + 1]) / gamma
       c0 = (R[i + 1, j + 1] - R[i, j] - D[i + 1, j + 1]) / gamma
-      a = np.exp((R[i + 1, j] - R[i, j] - D[i + 1, j]) / gamma)
-      b = np.exp((R[i, j + 1] - R[i, j] - D[i, j + 1]) / gamma)
-      c = np.exp((R[i + 1, j + 1] - R[i, j] - D[i + 1, j + 1]) / gamma)
+      a = np.exp(a0)
+      b = np.exp(b0)
+      c = np.exp(c0)
       E[i, j] = E[i + 1, j] * a + E[i, j + 1] * b + E[i + 1, j + 1] * c
   return E[1:N + 1, 1:M + 1]
 
