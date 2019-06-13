@@ -20,17 +20,13 @@ As the original authors pointed out [1], the derivative is the same as the expec
 You may also specify the temperature gamma (positive number). As gamma goes to zero, the result converges to that of the original "hard" DTW.
 
 ```python
-from softdtw import SoftDTW
-
-# compute D using whatever metric (L1, L2, ...)
-
-func_dtw = SoftDTW.apply
-
-R = func_dtw(D, 0.1) # the second argument is gamma
-R.backward()
-
-print(D.grad)
+from soft_dtw import SoftDTW
+...
+criterion = SoftDTW(gamma=1.0, normalize=True) # just like nn.MSELoss()
+...
+loss = criterion(out, target)
 ```
+
 
 ### Does it support pruning?
 
