@@ -44,14 +44,12 @@ def compute_softdtw_backward(D_, R, gamma):
 
 class _SoftDTW(Function):
   @staticmethod
-  def forward(ctx, D, gamma = 1.0):
+  def forward(ctx, D, gamma):
     dev = D.device
     dtype = D.dtype
-    # gamma = torch.FloatTensor([gamma]).to(dev)
     gamma = torch.Tensor([gamma]).to(dev).type(dtype) # dtype fixed
     D_ = D.detach().cpu().numpy()
     g_ = gamma.item()
-    # R = torch.FloatTensor(compute_softdtw(D_, g_)).to(dev)
     R = torch.Tensor(compute_softdtw(D_, g_)).to(dev).type(dtype)
     ctx.save_for_backward(D, R, gamma)
     return R[-2, -2]
@@ -64,20 +62,10 @@ class _SoftDTW(Function):
     D_ = D.detach().cpu().numpy()
     R_ = R.detach().cpu().numpy()
     g_ = gamma.item()
-    # E = torch.FloatTensor(compute_softdtw_backward(D_, R_, g_)).to(dev)
     E = torch.Tensor(compute_softdtw_backward(D_, R_, g_)).to(dev).type(dtype)
     return grad_output * E, None
 
 ## Added
-def calc_distance_matrix(x, y):
-  n = x.size(0)
-  m = y.size(0)
-  d = x.size(1)
-  x = x.unsqueeze(1).expand(n, m, d)
-  y = y.unsqueeze(0).expand(n, m, d)
-  dist = torch.pow(x - y, 2).sum(2)
-  return dist
-
 '''
 def calc_distance_matrices(xb, yb):
     batch_size = xb.size(0)
@@ -90,23 +78,31 @@ def calc_distance_matrices(xb, yb):
 '''
 
 class SoftDTW(torch.nn.Module):
-  def __init__(self, normalize=False):
+  def __init__(self, gamma=1.0, normalize=False):
     super(SoftDTW, self).__init__()
     self.normalize = normalize
+    self.gamma=gamma
     self.func_dtw = _SoftDTW.apply
+
+  def calc_distance_matrix(self, x, y):
+    n = x.size(0)
+    m = y.size(0)
+    d = x.size(1)
+    x = x.unsqueeze(1).expand(n, m, d)
+    y = y.unsqueeze(0).expand(n, m, d)
+    dist = torch.pow(x - y, 2).sum(2)
+    return dist
 
   def forward(self, x, y):
     if self.normalize:
-      D_xy = calc_distance_matrix(x, y)
-      out_xy = self.func_dtw(D_xy)
-      # normalize discrepancy to distance
-      D_xx = calc_distance_matrix(x, x)
-      out_xx = self.func_dtw(D_xx)
-      D_yy = calc_distance_matrix(y, y)
-      out_yy = self.func_dtw(D_yy)
-      out = out_xy - 1/2 * (out_xx + out_yy)
-      return out
+      D_xy = self.calc_distance_matrix(x, y)
+      out_xy = self.func_dtw(D_xy, self.gamma)
+      D_xx = self.calc_distance_matrix(x, x)
+      out_xx = self.func_dtw(D_xx, self.gamma)
+      D_yy = self.calc_distance_matrix(y, y)
+      out_yy = self.func_dtw(D_yy, self.gamma)
+      return out_xy - 1/2 * (out_xx + out_yy) # distance
     else:
-      D_xy = calc_distance_matrix(x, y)
-      out_xy = self.func_dtw(D_xy)
-      return out_xy
+      D_xy = self.calc_distance_matrix(x, y)
+      out_xy = self.func_dtw(D_xy, self.gamma)
+      return out_xy # discrepancy
