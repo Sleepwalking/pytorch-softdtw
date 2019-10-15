@@ -67,7 +67,7 @@ class _SoftDTW(Function):
     R_ = R.detach().cpu().numpy()
     g_ = gamma.item()
     E = torch.Tensor(compute_softdtw_backward(D_, R_, g_)).to(dev).type(dtype)
-    return grad_output * E, None
+    return grad_output.view(-1, 1, 1).expand_as(E) * E, None
 
 class SoftDTW(torch.nn.Module):
   def __init__(self, gamma=1.0, normalize=False):
