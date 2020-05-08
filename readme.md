@@ -3,6 +3,8 @@ pytorch-softdtw
 
 An implementation of SoftDTW [1] for PyTorch. Should run pretty fast.
 
+More goodies: check out [pytorch-softdtw-cuda](https://github.com/Maghoumi/pytorch-softdtw-cuda) by Maghoumi, a heavily upgraded version that runs parallel on CUDA.
+
 Install
 ---
 
